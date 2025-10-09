@@ -109,6 +109,7 @@ cython_debug/
 .DS_Store
 
 # Data files and outputs
+dataset/
 data/
 outputs/
 
