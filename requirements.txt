@@ -1,0 +1,8 @@
+torch
+torchvision
+opencv-python
+pillow
+numpy
+editdistance
+python-Levenshtein
+matplotlib
