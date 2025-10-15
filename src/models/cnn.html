@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Architecture Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            overflow-x: auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        svg {
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .layer-group {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .layer-group:hover .node {
+            fill: #ff6b6b;
+        }
+        
+        .layer-group:hover text {
+            font-weight: bold;
+        }
+        
+        .node {
+            transition: all 0.3s ease;
+        }
+        
+        .arrow {
+            transition: all 0.3s ease;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        
+        .info-box h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 CNN Architecture Diagram</h1>
+        <p class="subtitle">Deeper CNN with Batch Normalization</p>
+        
+        <svg width="1300" height="700" viewBox="0 0 1300 700">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#999" />
+                </marker>
+                
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            
+            <!-- Input Layer -->
+            <g class="layer-group" id="input">
+                <circle class="node" cx="50" cy="350" r="30" fill="#4ecdc4" stroke="#333" stroke-width="2"/>
+                <text x="50" y="355" text-anchor="middle" font-size="12" fill="white" font-weight="bold">INPUT</text>
+                <text x="50" y="410" text-anchor="middle" font-size="11" fill="#333">1×80×80</text>
+            </g>
+            
+            <!-- Block 1: Conv 32 -->
+            <line x1="80" y1="350" x2="130" y2="300" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="150" cy="280" r="20" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="150" cy="320" r="20" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="150" cy="360" r="20" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="150" cy="400" r="20" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="150" cy="440" r="20" fill="#ff6b6b" stroke="#333" stroke-width="2"/>
+                <text x="150" y="470" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Conv 32</text>
+                <text x="150" y="485" text-anchor="middle" font-size="9" fill="#666">32×80×80</text>
+            </g>
+            
+            <!-- Block 1: MaxPool -->
+            <line x1="170" y1="360" x2="220" y2="340" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="240" cy="310" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="240" cy="350" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="240" cy="390" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <text x="240" y="425" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Pool</text>
+                <text x="240" y="440" text-anchor="middle" font-size="9" fill="#666">32×40×40</text>
+            </g>
+            
+            <!-- Block 2: Conv 64 -->
+            <line x1="258" y1="350" x2="300" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="330" cy="270" r="20" fill="#a29bfe" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="330" cy="310" r="20" fill="#a29bfe" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="330" cy="350" r="20" fill="#a29bfe" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="330" cy="390" r="20" fill="#a29bfe" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="330" cy="430" r="20" fill="#a29bfe" stroke="#333" stroke-width="2"/>
+                <text x="330" y="460" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Conv 64</text>
+                <text x="330" y="475" text-anchor="middle" font-size="9" fill="#666">64×40×40</text>
+            </g>
+            
+            <!-- Block 2: MaxPool -->
+            <line x1="350" y1="350" x2="390" y2="340" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="420" cy="320" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="420" cy="360" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <text x="420" y="395" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Pool</text>
+                <text x="420" y="410" text-anchor="middle" font-size="9" fill="#666">64×20×20</text>
+            </g>
+            
+            <!-- Block 3: Conv 128 -->
+            <line x1="438" y1="340" x2="480" y2="340" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="510" cy="280" r="20" fill="#74b9ff" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="510" cy="320" r="20" fill="#74b9ff" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="510" cy="360" r="20" fill="#74b9ff" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="510" cy="400" r="20" fill="#74b9ff" stroke="#333" stroke-width="2"/>
+                <text x="510" y="435" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Conv 128</text>
+                <text x="510" y="450" text-anchor="middle" font-size="9" fill="#666">128×20×20</text>
+            </g>
+            
+            <!-- Block 3: MaxPool -->
+            <line x1="530" y1="340" x2="570" y2="340" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="600" cy="330" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="600" cy="370" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <text x="600" y="400" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Pool</text>
+                <text x="600" y="415" text-anchor="middle" font-size="9" fill="#666">128×10×10</text>
+            </g>
+            
+            <!-- Block 4: Conv 256 -->
+            <line x1="618" y1="350" x2="660" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="690" cy="310" r="20" fill="#fd79a8" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="690" cy="350" r="20" fill="#fd79a8" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="690" cy="390" r="20" fill="#fd79a8" stroke="#333" stroke-width="2"/>
+                <text x="690" y="425" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Conv 256</text>
+                <text x="690" y="440" text-anchor="middle" font-size="9" fill="#666">256×10×10</text>
+            </g>
+            
+            <!-- Block 4: MaxPool -->
+            <line x1="710" y1="350" x2="750" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="780" cy="350" r="18" fill="#ffd93d" stroke="#333" stroke-width="2"/>
+                <text x="780" y="380" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Pool</text>
+                <text x="780" y="395" text-anchor="middle" font-size="9" fill="#666">256×5×5</text>
+            </g>
+            
+            <!-- Flatten -->
+            <line x1="798" y1="350" x2="840" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <rect x="860" y="330" width="40" height="40" fill="#95e1d3" stroke="#333" stroke-width="2" rx="5"/>
+                <text x="880" y="355" text-anchor="middle" font-size="10" fill="#333" font-weight="bold">Flatten</text>
+                <text x="880" y="385" text-anchor="middle" font-size="9" fill="#666">6400</text>
+            </g>
+            
+            <!-- FC 512 -->
+            <line x1="900" y1="350" x2="940" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="970" cy="310" r="18" fill="#55efc4" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="970" cy="350" r="18" fill="#55efc4" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="970" cy="390" r="18" fill="#55efc4" stroke="#333" stroke-width="2"/>
+                <text x="970" y="420" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">FC 512</text>
+                <text x="970" y="435" text-anchor="middle" font-size="9" fill="#666">+BN+Drop</text>
+            </g>
+            
+            <!-- FC 256 -->
+            <line x1="988" y1="350" x2="1030" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="1060" cy="330" r="18" fill="#81ecec" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="1060" cy="370" r="18" fill="#81ecec" stroke="#333" stroke-width="2"/>
+                <text x="1060" y="400" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">FC 256</text>
+                <text x="1060" y="415" text-anchor="middle" font-size="9" fill="#666">+BN+Drop</text>
+            </g>
+            
+            <!-- Output -->
+            <line x1="1078" y1="350" x2="1120" y2="350" stroke="#999" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <g class="layer-group">
+                <circle class="node" cx="1150" cy="340" r="18" fill="#00b894" stroke="#333" stroke-width="2"/>
+                <circle class="node" cx="1150" cy="370" r="18" fill="#00b894" stroke="#333" stroke-width="2"/>
+                <text x="1150" y="400" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Output</text>
+                <text x="1150" y="415" text-anchor="middle" font-size="9" fill="#666">num_classes</text>
+            </g>
+            
+            <!-- Legend -->
+            <g transform="translate(50, 550)">
+                <text x="0" y="0" font-size="14" fill="#333" font-weight="bold">Legend:</text>
+                <circle cx="10" cy="25" r="8" fill="#ff6b6b" stroke="#333" stroke-width="1"/>
+                <text x="25" y="30" font-size="11" fill="#333">Convolutional Layers (with BatchNorm)</text>
+                
+                <circle cx="10" cy="50" r="8" fill="#ffd93d" stroke="#333" stroke-width="1"/>
+                <text x="25" y="55" font-size="11" fill="#333">MaxPooling Layers</text>
+                
+                <circle cx="250" cy="25" r="8" fill="#55efc4" stroke="#333" stroke-width="1"/>
+                <text x="265" y="30" font-size="11" fill="#333">Fully Connected Layers</text>
+                
+                <rect x="250" y="42" width="16" height="16" fill="#95e1d3" stroke="#333" stroke-width="1" rx="2"/>
+                <text x="273" y="55" font-size="11" fill="#333">Flatten Operation</text>
+            </g>
+        </svg>
+        
+        <div class="info-box">
+            <h3>Architecture Summary</h3>
+            <p><strong>Total Blocks:</strong> 4 convolutional blocks with progressive feature extraction (32 → 64 → 128 → 256 filters)</p>
+            <p><strong>Regularization:</strong> Batch Normalization after each conv layer, Dropout2d (0.25) after pooling, Dropout (0.5) in FC layers</p>
+            <p><strong>Parameters:</strong> ~5.8M trainable parameters</p>
+            <p><strong>Input → Output:</strong> 80×80 grayscale image → num_classes logits</p>
+        </div>
+    </div>
+</body>
+</html>

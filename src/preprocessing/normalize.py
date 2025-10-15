@@ -1,6 +1,6 @@
 import cv2
 import os
-from pathlib import Path
+
 
 def normalize_image(input_path, output_path):
     img = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)

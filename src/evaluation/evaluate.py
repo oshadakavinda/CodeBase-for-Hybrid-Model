@@ -1,223 +1,130 @@
 import torch
-import torch.nn.functional as F
-import editdistance
+import torch.nn as nn
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import matplotlib.pyplot as plt
+import numpy as np
 
-def compute_cer(preds, labels, char_to_idx, blank_idx=0):
-    """Compute Character Error Rate (CER) for CTC-based predictions.
+def evaluate_model(model, test_loader, device):
+    """Evaluate classification model on test set.
     
     Args:
-        preds: Model outputs, shape (batch_size, seq_len, num_classes).
-        labels: Ground truth labels, shape (batch_size, seq_len) or (batch_size,).
-        char_to_idx: Dictionary mapping characters to indices.
-        blank_idx: Index of the blank token (default 0).
+        model: Trained model (CNNModel, RNNModel, or HybridModel)
+        test_loader: DataLoader for test data
+        device: Device to run evaluation on
     
     Returns:
-        float: Average CER across the batch.
-    """
-    idx_to_char = {i: c for c, i in char_to_idx.items()}
-    idx_to_char[blank_idx] = ''
-    total_cer = 0
-    batch_size = preds.size(0)
-    
-    for i in range(batch_size):
-        pred = preds[i].argmax(dim=1)
-        pred_str = ''.join(idx_to_char.get(idx.item(), '') for idx in pred if idx.item() != blank_idx)
-        
-        if labels.dim() == 2:
-            true_str = ''.join(idx_to_char.get(idx.item(), '') for idx in labels[i] if idx.item() != blank_idx)
-        else:
-            true_str = idx_to_char.get(labels[i].item(), '')
-        
-        cer = editdistance.eval(pred_str, true_str) / max(len(true_str), 1)  # Use editdistance.eval
-        total_cer += cer
-    
-    return total_cer / batch_size
-
-def compute_wer(preds, labels, char_to_idx, blank_idx=0):
-    """Compute Word Error Rate (WER). Treats each character sequence as a word.
-    
-    Args:
-        preds: Model outputs, shape (batch_size, seq_len, num_classes).
-        labels: Ground truth labels, shape (batch_size, seq_len) or (batch_size,).
-        char_to_idx: Dictionary mapping characters to indices.
-        blank_idx: Index of the blank token (default 0).
-    
-    Returns:
-        float: Average WER across the batch.
-    """
-    idx_to_char = {i: c for c, i in char_to_idx.items()}
-    idx_to_char[blank_idx] = ''
-    total_wer = 0
-    batch_size = preds.size(0)
-    
-    for i in range(batch_size):
-        pred = preds[i].argmax(dim=1)
-        pred_str = ''.join(idx_to_char.get(idx.item(), '') for idx in pred if idx.item() != blank_idx)
-        
-        if labels.dim() == 2:
-            true_str = ''.join(idx_to_char.get(idx.item(), '') for idx in labels[i] if idx.item() != blank_idx)
-        else:
-            true_str = idx_to_char.get(labels[i].item(), '')
-        
-        wer = 1.0 if pred_str != true_str else 0.0
-        total_wer += wer
-    
-    return total_wer / batch_size
-
-def evaluate_hybrid(model, test_loader, char_to_idx, device):
-    """Evaluate the HybridModel using CER, WER, and accuracy.
-    
-    Args:
-        model: Trained HybridModel.
-        test_loader: DataLoader for test data.
-        char_to_idx: Dictionary mapping characters to indices.
-        device: Device to run evaluation on.
-    
-    Returns:
-        tuple: (CER, WER, accuracy).
+        dict: Metrics (accuracy, precision, recall, f1)
     """
     model.eval()
-    total_cer, total_wer, correct, total = 0, 0, 0, 0
+    all_preds = []
+    all_labels = []
+    total_loss = 0.0
+    criterion = nn.CrossEntropyLoss()
     
     with torch.no_grad():
         for images, labels in test_loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
-            print(f"Evaluate HybridModel - Output shape: {outputs.shape}, Label shape: {labels.shape}")
             
-            outputs = F.log_softmax(outputs, dim=2)
-            total_cer += compute_cer(outputs, labels, char_to_idx, blank_idx=0)
-            total_wer += compute_wer(outputs, labels, char_to_idx, blank_idx=0)
+            # Ensure output is 2D (batch_size, num_classes)
+            if outputs.dim() == 3:
+                outputs = outputs.squeeze(1)
             
-            if labels.dim() == 1:
-                preds = outputs.argmax(dim=2)[:, 0]
-                correct += (preds == labels).sum().item()
-            total += labels.size(0)
-    
-    cer = total_cer / len(test_loader)
-    wer = total_wer / len(test_loader)
-    accuracy = correct / total if total > 0 else 0.0
-    return cer, wer, accuracy
-
-def evaluate_cnn(model, test_loader, char_to_idx, device):
-    """Evaluate the CNNModel using accuracy.
-    
-    Args:
-        model: Trained CNNModel.
-        test_loader: DataLoader for test data.
-        char_to_idx: Dictionary mapping characters to indices.
-        device: Device to run evaluation on.
-    
-    Returns:
-        float: Accuracy.
-    """
-    model.eval()
-    correct, total = 0, 0
-    
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            print(f"Evaluate CNNModel - Output shape: {outputs.shape}, Label shape: {labels.shape}")
+            loss = criterion(outputs, labels)
+            total_loss += loss.item()
             
-            if outputs.dim() == 1:
-                outputs = outputs.unsqueeze(0)
             preds = outputs.argmax(dim=1)
-            correct += (preds == labels).sum().item()
-            total += labels.size(0)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
     
-    accuracy = correct / total if total > 0 else 0.0
-    return accuracy
+    all_preds = np.array(all_preds)
+    all_labels = np.array(all_labels)
+    
+    # Calculate metrics
+    accuracy = accuracy_score(all_labels, all_preds)
+    precision = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
+    recall = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
+    f1 = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
+    avg_loss = total_loss / len(test_loader)
+    
+    metrics = {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+        'loss': avg_loss
+    }
+    
+    return metrics, all_preds, all_labels
 
-def evaluate_rnn(model, test_loader, char_to_idx, device):
-    """Evaluate the RNNModel using CER, WER, and accuracy.
+def print_evaluation_report(model, test_loader, model_name, device):
+    """Print detailed evaluation report.
     
     Args:
-        model: Trained RNNModel.
-        test_loader: DataLoader for test data.
-        char_to_idx: Dictionary mapping characters to indices.
-        device: Device to run evaluation on.
-    
-    Returns:
-        tuple: (CER, WER, accuracy).
+        model: Trained model
+        test_loader: DataLoader for test data
+        model_name: Name of model (e.g., 'CNN', 'RNN', 'Hybrid')
+        device: Device to run evaluation on
     """
-    model.eval()
-    total_cer, total_wer, correct, total = 0, 0, 0, 0
+    metrics, preds, labels = evaluate_model(model, test_loader, device)
     
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            print(f"Evaluate RNNModel - Output shape: {outputs.shape}, Label shape: {labels.shape}")
-            
-            outputs = F.log_softmax(outputs, dim=2)
-            total_cer += compute_cer(outputs, labels, char_to_idx, blank_idx=0)
-            total_wer += compute_wer(outputs, labels, char_to_idx, blank_idx=0)
-            
-            if labels.dim() == 1:
-                preds = outputs.argmax(dim=2)[:, 0]
-                correct += (preds == labels).sum().item()
-            total += labels.size(0)
+    print(f"\n{'='*50}")
+    print(f"Evaluation Report: {model_name} Model")
+    print(f"{'='*50}")
+    print(f"Accuracy:  {metrics['accuracy']*100:.2f}%")
+    print(f"Precision: {metrics['precision']*100:.2f}%")
+    print(f"Recall:    {metrics['recall']*100:.2f}%")
+    print(f"F1 Score:  {metrics['f1']*100:.2f}%")
+    print(f"Loss:      {metrics['loss']:.4f}")
+    print(f"{'='*50}\n")
     
-    cer = total_cer / len(test_loader)
-    wer = total_wer / len(test_loader)
-    accuracy = correct / total if total > 0 else 0.0
-    return cer, wer, accuracy
+    return metrics
 
-def visualize_predictions(model, test_loader, char_to_idx, device, num_samples=5, save_path="outputs/visualizations/predictions.png"):
-    """Visualize model predictions on a batch of test data.
+def compare_models(models_dict, test_loader, device):
+    """Compare multiple models on test set.
     
     Args:
-        model: Trained model (HybridModel, CNNModel, or RNNModel).
-        test_loader: DataLoader for test data.
-        char_to_idx: Dictionary mapping characters to indices.
-        device: Device to run the model on.
-        num_samples: Number of samples to visualize (default: 5).
-        save_path: Path to save the visualization.
+        models_dict: Dictionary with model names as keys and models as values
+        test_loader: DataLoader for test data
+        device: Device to run evaluation on
     """
-    model.eval()
-    idx_to_char = {i: c for c, i in char_to_idx.items()}
-    idx_to_char[0] = ''
+    results = {}
     
-    with torch.no_grad():
-        images, labels = next(iter(test_loader))
-        images, labels = images.to(device), labels.to(device)
-        
-        outputs = model(images)
-        
-        if outputs.dim() == 3:
-            preds = outputs.argmax(dim=2)
-            pred_strings = [
-                ''.join(idx_to_char.get(idx.item(), '') for idx in pred if idx.item() != 0)
-                for pred in preds
-            ][:num_samples]
-        else:
-            preds = outputs.argmax(dim=1)
-            pred_strings = [idx_to_char.get(pred.item(), '') for pred in preds][:num_samples]
-        
-        if labels.dim() == 2:
-            true_strings = [
-                ''.join(idx_to_char.get(idx.item(), '') for idx in label if idx.item() != 0)
-                for label in labels
-            ][:num_samples]
-        else:
-            true_strings = [idx_to_char.get(label.item(), '') for label in labels][:num_samples]
-        
-        fig, axes = plt.subplots(1, min(num_samples, len(images)), figsize=(15, 5))
-        if num_samples == 1:
-            axes = [axes]
-        for i, ax in enumerate(axes):
-            img = images[i].cpu().numpy().transpose(1, 2, 0)
-            if img.shape[2] == 1:
-                img = img.squeeze(2)
-                ax.imshow(img, cmap="gray")
-            else:
-                ax.imshow(img)
-            ax.set_title(f"Pred: {pred_strings[i]}\nTrue: {true_strings[i]}")
-            ax.axis("off")
-        
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.show()
-        plt.close()
+    print("\n" + "="*60)
+    print("MODEL COMPARISON")
+    print("="*60)
+    
+    for model_name, model in models_dict.items():
+        metrics, _, _ = evaluate_model(model, test_loader, device)
+        results[model_name] = metrics
+        print(f"\n{model_name}:")
+        print(f"  Accuracy:  {metrics['accuracy']*100:.2f}%")
+        print(f"  Precision: {metrics['precision']*100:.2f}%")
+        print(f"  Recall:    {metrics['recall']*100:.2f}%")
+        print(f"  F1 Score:  {metrics['f1']*100:.2f}%")
+    
+    print("\n" + "="*60)
+    
+    # Plot comparison
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    metrics_names = ['accuracy', 'precision', 'recall', 'f1']
+    x = np.arange(len(metrics_names))
+    width = 0.25
+    
+    for i, (model_name, metrics) in enumerate(results.items()):
+        values = [metrics[m]*100 for m in metrics_names]
+        ax.bar(x + i*width, values, width, label=model_name)
+    
+    ax.set_xlabel('Metrics', fontsize=12)
+    ax.set_ylabel('Score (%)', fontsize=12)
+    ax.set_title('Model Comparison', fontsize=14, fontweight='bold')
+    ax.set_xticks(x + width)
+    ax.set_xticklabels(metrics_names)
+    ax.legend()
+    ax.grid(axis='y', alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return results
