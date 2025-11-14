@@ -111,7 +111,7 @@ cython_debug/
 # Data files and outputs
 dataset/
 data/
-outputs/
+
 
 # Fonts
 fonts/
